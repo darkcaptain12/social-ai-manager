@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Layers, RefreshCw, Target, Clock, Lightbulb } from "lucide-react";
 import toast from "react-hot-toast";
-import type { ContentStrategy } from "@/types";
+import type { ContentStrategy, ContentItem } from "@/types";
 
 const DAY_LABELS: Record<string, string> = {
   monday: "Pazartesi", tuesday: "Salı", wednesday: "Çarşamba",
@@ -137,7 +137,7 @@ export default function StrategyPage() {
                       <p className="text-xs font-semibold text-gray-400 uppercase">{DAY_LABELS[day] ?? day}</p>
                     </div>
                     <div className="flex-1 space-y-2">
-                      {items.map((item, i) => (
+                      {items.map((item: ContentItem, i: number) => (
                         <div key={i} className="bg-surface-muted rounded-lg p-3 border border-surface-border">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="badge badge-blue capitalize">{item.type}</span>

@@ -28,9 +28,10 @@ export async function generateImage(params: {
     n: 1,
   });
 
+  const image = response.data?.[0];
   return {
-    url: response.data[0].url ?? "",
-    revisedPrompt: response.data[0].revised_prompt,
+    url: image?.url ?? "",
+    revisedPrompt: image?.revised_prompt,
   };
 }
 
@@ -55,7 +56,8 @@ export async function generateMultipleVariants(
         style: styles[i],
         n: 1,
       });
-      if (response.data[0].url) urls.push(response.data[0].url);
+      const url = response.data?.[0]?.url;
+      if (url) urls.push(url);
     } catch {
       // Skip failed variants
     }

@@ -1,0 +1,12 @@
+{
+  "imageProvider": "openai",
+  "language": "tr",
+  "theme": "dark",
+  "autoSchedule": false,
+  "nightly_jobs": true,
+  "openaiApiKey": "",
+  "anthropicApiKey": "",
+  "geminiApiKey": "",
+  "instagramAccessToken": "",
+  "instagramAccountId": ""
+}
