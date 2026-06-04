@@ -1,11 +1,3 @@
-/**
- * BASE AGENT
- * All agents extend this. Each agent:
- * - Receives only its relevant memory slice
- * - Returns structured JSON
- * - Never stores raw conversation
- */
-
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { memory } from "@/lib/memory/store";
@@ -25,11 +17,8 @@ export function getOpenAIClient(settings: Settings) {
   return null;
 }
 
-export async function runClaude(
-  systemPrompt: string,
-  userMessage: string
-): Promise<string> {
-  const settings = memory.getSettings();
+export async function runClaude(systemPrompt: string, userMessage: string): Promise<string> {
+  const settings = await memory.getSettings();
   const client = getAIClient(settings);
   if (!client) throw new Error("Anthropic API key not configured");
 
@@ -45,11 +34,8 @@ export async function runClaude(
   return content.text;
 }
 
-export async function runGPT(
-  systemPrompt: string,
-  userMessage: string
-): Promise<string> {
-  const settings = memory.getSettings();
+export async function runGPT(systemPrompt: string, userMessage: string): Promise<string> {
+  const settings = await memory.getSettings();
   const client = getOpenAIClient(settings);
   if (!client) throw new Error("OpenAI API key not configured");
 
@@ -67,7 +53,6 @@ export async function runGPT(
 
 export function parseJSON<T>(text: string, fallback: T): T {
   try {
-    // Extract JSON from markdown code blocks if present
     const match = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
     const raw = match ? match[1] : text;
     return JSON.parse(raw) as T;

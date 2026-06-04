@@ -3,33 +3,19 @@ import { memory } from "@/lib/memory/store";
 import { generateId } from "@/lib/utils";
 import type { Competitor } from "@/types";
 
-const SYSTEM = `You are a Competitor Analysis Agent for Instagram marketing.
-Analyze competitors and find content gaps and opportunities.
-ALWAYS return valid JSON only.`;
+const SYSTEM = `You are a Competitor Analysis Agent. Analyze Instagram competitors and find content gaps. ALWAYS return valid JSON only.`;
 
-export async function analyzeCompetitor(input: {
-  name: string;
-  instagramHandle: string;
-  niche?: string;
-}): Promise<Competitor> {
-  const brand = memory.getBrand();
+export async function analyzeCompetitor(input: { name: string; instagramHandle: string; niche?: string }): Promise<Competitor> {
+  const brand = await memory.getBrand();
   const prompt = `Analyze this Instagram competitor for a brand in the ${brand?.niche ?? "marketing"} niche.
-
 Competitor: ${JSON.stringify(input)}
 Our brand: ${brand ? JSON.stringify({ name: brand.name, niche: brand.niche, positioning: brand.positioning }) : "unknown"}
-
 Return JSON:
 {
-  "id": "generated_id",
-  "name": string,
-  "instagramHandle": string,
-  "followerCount": estimated_number,
-  "engagementRate": estimated_percentage (0-10),
-  "contentStyle": string description,
-  "postingFrequency": "X posts per week",
-  "topHashtags": [10 likely hashtags],
-  "contentGaps": [3-5 things they don't cover well],
-  "opportunities": [3-5 opportunities for our brand]
+  "id": "id", "name": string, "instagramHandle": string,
+  "followerCount": number, "engagementRate": number (0-10),
+  "contentStyle": string, "postingFrequency": "X per week",
+  "topHashtags": [10], "contentGaps": [3-5], "opportunities": [3-5]
 }`;
 
   const raw = await runClaude(SYSTEM, prompt);
@@ -47,38 +33,22 @@ Return JSON:
     opportunities: parsed.opportunities ?? [],
     lastAnalyzed: new Date().toISOString(),
   };
-  memory.addCompetitor(competitor);
+  await memory.addCompetitor(competitor);
   return competitor;
 }
 
 export async function getCompetitiveReport(): Promise<{
-  summary: string;
-  marketGaps: string[];
-  winningAngles: string[];
-  contentIdeas: string[];
+  summary: string; marketGaps: string[]; winningAngles: string[]; contentIdeas: string[];
 }> {
-  const competitors = memory.getCompetitors();
-  const brand = memory.getBrand();
+  const competitors = await memory.getCompetitors();
+  const brand = await memory.getBrand();
   if (competitors.length === 0) throw new Error("No competitors analyzed yet");
 
   const prompt = `Generate a competitive intelligence report.
-
-Our brand: ${JSON.stringify(brand)}
+Brand: ${JSON.stringify(brand)}
 Competitors: ${JSON.stringify(competitors)}
-
-Return JSON:
-{
-  "summary": string (2-3 sentence overview),
-  "marketGaps": [5 underserved opportunities],
-  "winningAngles": [5 positioning angles we can dominate],
-  "contentIdeas": [10 content ideas based on gaps]
-}`;
+Return JSON: { "summary": string, "marketGaps": [5], "winningAngles": [5], "contentIdeas": [10] }`;
 
   const raw = await runClaude(SYSTEM, prompt);
-  return parseJSON(raw, {
-    summary: "",
-    marketGaps: [],
-    winningAngles: [],
-    contentIdeas: [],
-  });
+  return parseJSON(raw, { summary: "", marketGaps: [], winningAngles: [], contentIdeas: [] });
 }

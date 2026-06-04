@@ -7,3 +7,5 @@ dist/
 *.log
 .cache/
 
+.vercel
+.env*.local

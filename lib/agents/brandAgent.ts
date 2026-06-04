@@ -3,33 +3,24 @@ import { memory } from "@/lib/memory/store";
 import { generateId } from "@/lib/utils";
 import type { Brand } from "@/types";
 
-const SYSTEM = `You are a Brand Intelligence Agent for an Instagram AI marketing system.
-Your job: analyze brand data and return structured brand intelligence.
-ALWAYS return valid JSON only. No prose.`;
+const SYSTEM = `You are a Brand Intelligence Agent. Analyze brand data and return structured brand intelligence. ALWAYS return valid JSON only.`;
 
 export async function analyzeBrand(input: {
-  name: string;
-  description: string;
-  niche: string;
-  targetAudience: string;
-  keywords?: string[];
-  language?: string;
+  name: string; description: string; niche: string;
+  targetAudience: string; keywords?: string[]; language?: string;
 }): Promise<Brand> {
   const prompt = `Analyze this brand and return a complete Brand JSON object.
-
-Brand input:
-${JSON.stringify(input, null, 2)}
-
-Return JSON with this exact shape:
+Brand input: ${JSON.stringify(input, null, 2)}
+Return JSON:
 {
   "id": "generated_id",
   "name": string,
   "description": string,
-  "colorPalette": [3-5 hex colors that match brand feel],
+  "colorPalette": [3-5 hex colors],
   "toneOfVoice": "professional|friendly|bold|playful|inspirational|educational",
   "targetAudience": string,
-  "keywords": [10 relevant keywords],
-  "positioning": string (one sentence brand positioning statement),
+  "keywords": [10 keywords],
+  "positioning": string,
   "niche": string,
   "language": "tr|en",
   "updatedAt": ISO date
@@ -50,35 +41,20 @@ Return JSON with this exact shape:
     language: parsed.language ?? input.language ?? "tr",
     updatedAt: new Date().toISOString(),
   };
-  memory.saveBrand(brand);
+  await memory.saveBrand(brand);
   return brand;
 }
 
 export async function getBrandInsights(): Promise<{
-  strengths: string[];
-  weaknesses: string[];
-  opportunities: string[];
-  recommendations: string[];
+  strengths: string[]; weaknesses: string[]; opportunities: string[]; recommendations: string[];
 }> {
-  const brand = memory.getBrand();
+  const brand = await memory.getBrand();
   if (!brand) throw new Error("No brand configured");
 
   const prompt = `Based on this brand profile, provide strategic insights.
 Brand: ${JSON.stringify(brand, null, 2)}
-
-Return JSON:
-{
-  "strengths": [3-5 items],
-  "weaknesses": [2-3 items],
-  "opportunities": [3-5 items],
-  "recommendations": [5 actionable items]
-}`;
+Return JSON: { "strengths": [3-5], "weaknesses": [2-3], "opportunities": [3-5], "recommendations": [5] }`;
 
   const raw = await runClaude(SYSTEM, prompt);
-  return parseJSON(raw, {
-    strengths: [],
-    weaknesses: [],
-    opportunities: [],
-    recommendations: [],
-  });
+  return parseJSON(raw, { strengths: [], weaknesses: [], opportunities: [], recommendations: [] });
 }

@@ -3,34 +3,22 @@ import { analyzeCompetitor, getCompetitiveReport } from "@/lib/agents/competitor
 import { memory } from "@/lib/memory/store";
 
 export async function GET() {
-  const competitors = memory.getCompetitors();
-  return NextResponse.json({ competitors });
+  return NextResponse.json({ competitors: await memory.getCompetitors() });
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { action, ...payload } = body;
-
-    if (action === "analyze") {
-      const competitor = await analyzeCompetitor(payload);
-      return NextResponse.json({ success: true, competitor });
-    }
-
-    if (action === "report") {
-      const report = await getCompetitiveReport();
-      return NextResponse.json({ success: true, report });
-    }
-
+    if (action === "analyze") return NextResponse.json({ success: true, competitor: await analyzeCompetitor(payload) });
+    if (action === "report") return NextResponse.json({ success: true, report: await getCompetitiveReport() });
     if (action === "delete") {
-      const competitors = memory.getCompetitors().filter((c) => c.id !== payload.id);
-      memory.saveCompetitors(competitors);
+      const list = (await memory.getCompetitors()).filter((c) => c.id !== payload.id);
+      await memory.saveCompetitors(list);
       return NextResponse.json({ success: true });
     }
-
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Error" }, { status: 500 });
   }
 }
