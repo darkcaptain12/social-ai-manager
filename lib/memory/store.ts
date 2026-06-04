@@ -1,6 +1,6 @@
 /**
  * HYBRID MEMORY STORE
- * - Vercel (production): uses @vercel/kv (Redis)
+ * - Vercel (production): uses @upstash/redis (KV_REST_API_URL + KV_REST_API_TOKEN)
  * - Local dev: falls back to JSON files in /data
  *
  * Each agent receives only the slice it needs.
@@ -18,16 +18,24 @@ const IS_VERCEL = !!(
   process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
 );
 
-// ─── KV BACKEND (Vercel) ──────────────────────────────────────────────────────
+// ─── KV BACKEND (Upstash Redis) ───────────────────────────────────────────────
+async function getRedis() {
+  const { Redis } = await import("@upstash/redis");
+  return new Redis({
+    url: process.env.KV_REST_API_URL!,
+    token: process.env.KV_REST_API_TOKEN!,
+  });
+}
+
 async function kvGet<T>(key: string, fallback: T): Promise<T> {
-  const { kv } = await import("@vercel/kv");
-  const val = await kv.get<T>(key);
+  const redis = await getRedis();
+  const val = await redis.get<T>(key);
   return val ?? fallback;
 }
 
 async function kvSet(key: string, value: unknown): Promise<void> {
-  const { kv } = await import("@vercel/kv");
-  await kv.set(key, value);
+  const redis = await getRedis();
+  await redis.set(key, value);
 }
 
 // ─── FILE BACKEND (Local) ─────────────────────────────────────────────────────
