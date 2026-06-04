@@ -18,6 +18,7 @@ import {
   Instagram,
   ChevronLeft,
   ChevronRight,
+  ScanSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -25,6 +26,7 @@ import { useState } from "react";
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/brand", label: "Marka", icon: Sparkles },
+  { href: "/dashboard/audience", label: "Profil Analizi", icon: ScanSearch },
   { href: "/dashboard/competitors", label: "Rakipler", icon: Users },
   { href: "/dashboard/viral", label: "Viral / Trend", icon: TrendingUp },
   { href: "/dashboard/strategy", label: "Strateji", icon: Layers },

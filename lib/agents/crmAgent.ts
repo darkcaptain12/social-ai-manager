@@ -25,10 +25,17 @@ export async function generateLeads(params: { niche?: string; count?: number }):
 
   const prompt = `Generate ${count} potential Instagram leads for a "${niche}" niche brand.
 Target audience: ${brand?.targetAudience ?? "general"}
-Return JSON array: [{ "id": string, "name": string, "instagramHandle": string, "status": "new", "priorityScore": 1-100, "notes": string, "tags": [2-3], "createdAt": ISO, "updatedAt": ISO }]`;
+
+Return JSON object:
+{
+  "leads": [
+    { "id": "unique_id", "name": "Full Name", "instagramHandle": "username", "status": "new", "priorityScore": 75, "notes": "Why this is a good lead", "tags": ["tag1", "tag2"], "createdAt": "${new Date().toISOString()}", "updatedAt": "${new Date().toISOString()}" }
+  ]
+}`;
 
   const raw = await runAI(SYSTEM, prompt);
-  const parsed = parseJSON<Lead[]>(raw, []);
+  const wrapper = parseJSON<{ leads?: Lead[] } | Lead[]>(raw, { leads: [] });
+  const parsed: Lead[] = Array.isArray(wrapper) ? wrapper : (wrapper as { leads?: Lead[] }).leads ?? [];
   const leads = parsed.map((l) => ({
     ...l, id: l.id || generateId(),
     status: "new" as LeadStatus,
