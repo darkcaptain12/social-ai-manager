@@ -21,18 +21,22 @@ export async function POST(req: NextRequest) {
   try {
     const body: Record<string, unknown> = await req.json();
 
-    // Strip out placeholder/masked values — never overwrite real keys with fake ones
+    // Get current stored settings first
+    const current = await memory.getSettings();
+    const currentMap = current as unknown as Record<string, unknown>;
+
+    const SENSITIVE = ["openaiApiKey", "geminiApiKey", "instagramAccessToken", "bufferAccessToken", "instagramAppSecret"];
+
+    // Strip out placeholder/masked/empty values for sensitive keys
     const clean: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(body)) {
-      if (
-        v === "__SET__" ||
-        v === "sk-...****" ||
-        v === "AIza...****" ||
-        v === "EAAG...****" ||
-        v === "sk-ant-...****"
-      ) {
-        // Skip — don't overwrite the stored real value
-        continue;
+      if (SENSITIVE.includes(k)) {
+        // Skip if: placeholder sentinel, masked value, or EMPTY STRING
+        if (!v || v === "__SET__" || String(v).includes("****")) {
+          // Keep the existing stored value — don't overwrite with empty/placeholder
+          if (currentMap[k]) clean[k] = currentMap[k];
+          continue;
+        }
       }
       clean[k] = v;
     }
