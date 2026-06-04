@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Settings, Eye, EyeOff, Save, RefreshCw, CheckCircle2, Instagram, Link2, Unlink, AlertCircle } from "lucide-react";
+import { Settings, Eye, EyeOff, Save, RefreshCw, CheckCircle2, Instagram, Link2, Unlink, AlertCircle, ExternalLink } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
@@ -13,9 +13,23 @@ interface SettingsForm {
   imageProvider: string;
   instagramAccessToken: string;
   instagramAccountId: string;
+  bufferAccessToken: string;
+  bufferProfileId: string;
   language: string;
   autoSchedule: boolean;
   nightly_jobs: boolean;
+}
+
+interface BufferProfile {
+  id: string;
+  service_username: string;
+  avatar: string;
+}
+
+interface BufferStatus {
+  connected: boolean;
+  username?: string;
+  profiles?: BufferProfile[];
 }
 
 interface IGStatus {
@@ -43,8 +57,11 @@ function SettingsInner() {
   const [form, setForm] = useState<SettingsForm>({
     openaiApiKey: "", anthropicApiKey: "", geminiApiKey: "",
     imageProvider: "openai", instagramAccessToken: "", instagramAccountId: "",
+    bufferAccessToken: "", bufferProfileId: "",
     language: "tr", autoSchedule: false, nightly_jobs: true,
   });
+  const [bufferStatus, setBufferStatus] = useState<BufferStatus>({ connected: false });
+  const [bufferConnecting, setBufferConnecting] = useState(false);
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -97,6 +114,38 @@ function SettingsInner() {
 
   function toggleShow(key: string) {
     setShowKeys((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  async function connectBuffer() {
+    if (!form.bufferAccessToken) { toast.error("Buffer Access Token girin"); return; }
+    setBufferConnecting(true);
+    try {
+      const res = await fetch("/api/integrations/buffer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "connect", token: form.bufferAccessToken }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBufferStatus({ connected: true, username: data.user?.name, profiles: data.profiles });
+        if (data.profiles?.[0]) setForm((f) => ({ ...f, bufferProfileId: data.profiles[0].id }));
+        toast.success("Buffer bağlandı!");
+      } else {
+        toast.error(data.error ?? "Bağlantı başarısız");
+      }
+    } catch { toast.error("Buffer API hatası"); }
+    finally { setBufferConnecting(false); }
+  }
+
+  async function disconnectBuffer() {
+    await fetch("/api/integrations/buffer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "disconnect" }),
+    });
+    setBufferStatus({ connected: false });
+    setForm((f) => ({ ...f, bufferAccessToken: "", bufferProfileId: "" }));
+    toast.success("Buffer bağlantısı kesildi");
   }
 
   async function connectInstagram() {
@@ -201,6 +250,121 @@ function SettingsInner() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Buffer */}
+      <div className="card space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-[#2C4BFF]/20 border border-[#2C4BFF]/30 flex items-center justify-center flex-shrink-0">
+            {/* Buffer logo */}
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#2C4BFF">
+              <path d="M23.984 9.518a2.41 2.41 0 0 0-1.394-2.077L12.71 2.434a1.72 1.72 0 0 0-1.42 0L1.41 7.441A2.41 2.41 0 0 0 .016 9.518a2.41 2.41 0 0 0 1.394 2.077l9.88 5.007a1.72 1.72 0 0 0 1.42 0l9.88-5.007a2.41 2.41 0 0 0 1.394-2.077zm-1.5 4.977l-9.88 5.007a.22.22 0 0 1-.208 0L2.516 14.495a.92.92 0 0 0-.878 1.619l9.88 5.007a1.72 1.72 0 0 0 1.42 0l9.88-5.007a.92.92 0 0 0-.878-1.619z"/>
+            </svg>
+          </div>
+          <div>
+            <h3 className="font-semibold text-white">Buffer ile Instagram Bağlantısı</h3>
+            <p className="text-xs text-gray-500">Facebook hesabı gerekmez • Ücretsiz plan yeterli</p>
+          </div>
+          {bufferStatus.connected && (
+            <span className="ml-auto badge badge-green flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Bağlı
+            </span>
+          )}
+        </div>
+
+        {/* Setup guide */}
+        <div className="bg-[#2C4BFF]/10 border border-[#2C4BFF]/20 rounded-xl p-3 space-y-1.5">
+          <p className="text-xs font-semibold text-[#7b93ff]">Nasıl bağlanılır? (2 dakika)</p>
+          <ol className="text-xs text-gray-400 space-y-1 list-none">
+            <li className="flex items-start gap-2">
+              <span className="w-4 h-4 rounded-full bg-[#2C4BFF]/30 text-[#7b93ff] text-xs flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+              <span><a href="https://buffer.com" target="_blank" rel="noreferrer" className="text-[#7b93ff] hover:underline">buffer.com</a>'dan ücretsiz hesap aç</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="w-4 h-4 rounded-full bg-[#2C4BFF]/30 text-[#7b93ff] text-xs flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+              <span>Buffer'da Instagram hesabını bağla (Buffer kendi içinde halleder)</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="w-4 h-4 rounded-full bg-[#2C4BFF]/30 text-[#7b93ff] text-xs flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+              <span><a href="https://buffer.com/developers/apps" target="_blank" rel="noreferrer" className="text-[#7b93ff] hover:underline">buffer.com/developers/apps</a> → yeni uygulama oluştur → Access Token al</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="w-4 h-4 rounded-full bg-[#2C4BFF]/30 text-[#7b93ff] text-xs flex items-center justify-center flex-shrink-0 mt-0.5">4</span>
+              <span>Token'ı aşağıya yapıştır → Bağlan</span>
+            </li>
+          </ol>
+        </div>
+
+        {bufferStatus.connected ? (
+          <div className="space-y-3">
+            <div className="bg-emerald-950/30 border border-emerald-800/40 rounded-xl p-4 flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+              <div>
+                {bufferStatus.username && <p className="text-sm font-semibold text-white">{bufferStatus.username}</p>}
+                <p className="text-xs text-gray-500">
+                  {bufferStatus.profiles?.length ?? 0} Instagram profili bağlı
+                </p>
+              </div>
+            </div>
+
+            {/* Profile selector */}
+            {bufferStatus.profiles && bufferStatus.profiles.length > 1 && (
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Aktif Instagram Profili</label>
+                <select
+                  className="input text-sm"
+                  value={form.bufferProfileId}
+                  onChange={(e) => setForm((f) => ({ ...f, bufferProfileId: e.target.value }))}
+                >
+                  {bufferStatus.profiles.map((p) => (
+                    <option key={p.id} value={p.id}>@{p.service_username}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {bufferStatus.profiles?.[0] && (
+              <p className="text-xs text-gray-500">
+                Aktif: <span className="text-emerald-400">@{bufferStatus.profiles.find(p => p.id === form.bufferProfileId)?.service_username ?? bufferStatus.profiles[0].service_username}</span>
+              </p>
+            )}
+
+            <button onClick={disconnectBuffer} className="btn-ghost text-sm text-red-400 hover:text-red-300 hover:bg-red-950/20">
+              <Unlink className="w-4 h-4" />
+              Bağlantıyı Kes
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Buffer Access Token</label>
+              <div className="relative">
+                <input
+                  type={showKeys["bufferToken"] ? "text" : "password"}
+                  className="input pr-10 text-sm"
+                  placeholder="1/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                  value={form.bufferAccessToken}
+                  onChange={(e) => setForm({ ...form, bufferAccessToken: e.target.value })}
+                />
+                <button type="button" onClick={() => toggleShow("bufferToken")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+                  {showKeys["bufferToken"] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={connectBuffer} disabled={bufferConnecting} className="btn-primary text-sm">
+                {bufferConnecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                {bufferConnecting ? "Bağlanıyor..." : "Buffer'a Bağlan"}
+              </button>
+              <a href="https://buffer.com/developers/apps" target="_blank" rel="noreferrer" className="btn-secondary text-sm">
+                <ExternalLink className="w-4 h-4" />
+                Token Al
+              </a>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Instagram */}

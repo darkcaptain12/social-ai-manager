@@ -170,6 +170,9 @@ export interface Settings {
   imageProvider: "openai" | "ideogram" | "flux" | "stability" | "replicate";
   instagramAccessToken?: string;
   instagramAccountId?: string;
+  // Buffer integration (Facebook-free Instagram publishing)
+  bufferAccessToken?: string;
+  bufferProfileId?: string;
   language: "tr" | "en";
   theme: "dark" | "light" | "system";
   autoSchedule: boolean;

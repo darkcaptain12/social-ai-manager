@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PenTool, Image, RefreshCw, Copy, Wand2, Check, Download } from "lucide-react";
+import { PenTool, Image, RefreshCw, Copy, Wand2, Check, Download, Send, Calendar, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 import type { ContentItem, ContentType, ContentObjective } from "@/types";
@@ -35,6 +35,9 @@ export default function CreatePage() {
   const [loading, setLoading] = useState(false);
   const [imgLoading, setImgLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishMode, setPublishMode] = useState<"now" | "queue" | "schedule">("queue");
+  const [scheduleDate, setScheduleDate] = useState("");
 
   async function generateCopy() {
     if (!form.topic) { toast.error("Konu zorunlu"); return; }
@@ -82,6 +85,39 @@ export default function CreatePage() {
     } finally {
       setImgLoading(false);
     }
+  }
+
+  async function publishViaBuffer() {
+    if (!content) return;
+    setPublishing(true);
+    try {
+      const caption = `${content.caption}\n\n${content.hashtags.map((h) => `#${h}`).join(" ")}`;
+      const res = await fetch("/api/integrations/buffer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "post",
+          contentId: content.id,
+          text: caption,
+          mediaUrl: imageUrl ?? undefined,
+          now: publishMode === "now",
+          scheduledAt: publishMode === "schedule" ? scheduleDate : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(
+          publishMode === "now" ? "Buffer'a gönderildi — hemen yayınlanıyor!" :
+          publishMode === "schedule" ? "İçerik zamanlandı!" :
+          "Buffer kuyruğuna eklendi!"
+        );
+      } else if (data.error?.includes("not connected")) {
+        toast.error("Buffer bağlı değil — Ayarlar sayfasından bağlayın");
+      } else {
+        toast.error(data.error ?? "Yayınlama hatası");
+      }
+    } catch { toast.error("Buffer bağlantısı kurulamadı"); }
+    finally { setPublishing(false); }
   }
 
   function copyCaption() {
@@ -242,6 +278,66 @@ export default function CreatePage() {
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* Buffer Publish Panel */}
+          <div className="card space-y-3">
+            <h3 className="font-semibold text-white flex items-center gap-2">
+              <Send className="w-4 h-4 text-[#7b93ff]" />
+              Buffer ile Yayınla
+            </h3>
+
+            {/* Publish mode */}
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { key: "now", label: "Hemen Yayınla", icon: Send },
+                { key: "queue", label: "Kuyruğa Ekle", icon: Clock },
+                { key: "schedule", label: "Zamanla", icon: Calendar },
+              ] as const).map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setPublishMode(key)}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-all",
+                    publishMode === key
+                      ? "bg-[#2C4BFF]/20 border-[#2C4BFF]/50 text-[#7b93ff]"
+                      : "border-surface-border text-gray-500 hover:text-gray-300"
+                  )}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {publishMode === "schedule" && (
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Yayın Tarihi & Saati</label>
+                <input
+                  type="datetime-local"
+                  className="input text-sm"
+                  value={scheduleDate}
+                  onChange={(e) => setScheduleDate(e.target.value)}
+                />
+              </div>
+            )}
+
+            <button
+              onClick={publishViaBuffer}
+              disabled={publishing || (publishMode === "schedule" && !scheduleDate)}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl
+                         bg-[#2C4BFF] hover:bg-[#1a35e0] disabled:opacity-50
+                         text-white text-sm font-semibold transition-all"
+            >
+              {publishing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              {publishing ? "Gönderiliyor..." :
+               publishMode === "now" ? "Buffer'a Gönder — Hemen Yayınla" :
+               publishMode === "schedule" ? "Zamanla" : "Kuyruğa Ekle"}
+            </button>
+            <p className="text-xs text-gray-600 text-center">
+              Buffer bağlı değilse →{" "}
+              <a href="/dashboard/settings" className="text-[#7b93ff] hover:underline">Ayarlar</a>'dan bağlayın
+            </p>
           </div>
 
           {content.imagePrompt && (
