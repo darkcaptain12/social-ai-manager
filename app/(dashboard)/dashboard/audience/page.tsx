@@ -126,9 +126,14 @@ export default function AudiencePage() {
                   <p className="text-sm text-gray-400 mt-2 leading-relaxed">{profile.bio}</p>
                 )}
                 {profile.niche && (
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex gap-2 mt-2 flex-wrap">
                     <span className="badge badge-purple">{profile.niche}</span>
                     {profile.sector && <span className="badge badge-blue">{profile.sector}</span>}
+                    {profile.dataSource && (
+                      <span className="badge badge-yellow text-xs">
+                        kaynak: {profile.dataSource}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
