@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
   const redirectUri = `${appUrl}/api/integrations/buffer/callback`;
 
   try {
-    // Exchange code → access token (PKCE public client — no secret needed)
-    const tokenRes = await fetch("https://api.bufferapp.com/oauth2/token", {
+    // Exchange code → access token
+    const tokenRes = await fetch("https://api.bufferapp.com/1/oauth2/token.json", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
