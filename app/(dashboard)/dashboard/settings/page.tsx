@@ -87,17 +87,46 @@ function SettingsInner() {
 
   // Handle OAuth callback query params
   useEffect(() => {
-    const connected = searchParams.get("ig_connected");
-    const error = searchParams.get("ig_error");
-    const username = searchParams.get("ig_username");
-    if (connected === "1") {
-      setIgStatus({ connected: true, username: username ?? undefined });
-      toast.success(`Instagram bağlandı${username ? `: @${username}` : ""}!`);
+    // Instagram
+    const igConnected = searchParams.get("ig_connected");
+    const igError = searchParams.get("ig_error");
+    const igUsername = searchParams.get("ig_username");
+    if (igConnected === "1") {
+      setIgStatus({ connected: true, username: igUsername ?? undefined });
+      toast.success(`Instagram bağlandı${igUsername ? `: @${igUsername}` : ""}!`);
     }
-    if (error) {
-      toast.error(`Instagram hatası: ${decodeURIComponent(error)}`);
+    if (igError) toast.error(`Instagram hatası: ${decodeURIComponent(igError)}`);
+
+    // Buffer
+    const bufConnected = searchParams.get("buffer_connected");
+    const bufError = searchParams.get("buffer_error");
+    const bufUsername = searchParams.get("buffer_username");
+    const bufProfiles = searchParams.get("buffer_profiles");
+    if (bufConnected === "1") {
+      setBufferStatus({
+        connected: true,
+        username: bufUsername ? `@${bufUsername}` : undefined,
+      });
+      toast.success(`Buffer bağlandı! ${bufProfiles} Instagram profili bulundu.`);
     }
+    if (bufError) toast.error(`Buffer hatası: ${decodeURIComponent(bufError)}`);
   }, [searchParams]);
+
+  // Check existing Buffer connection on load
+  useEffect(() => {
+    fetch("/api/integrations/buffer")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.connected) {
+          setBufferStatus({
+            connected: true,
+            username: d.user?.name,
+            profiles: d.profiles,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function save() {
     setSaving(true);
@@ -117,23 +146,17 @@ function SettingsInner() {
   }
 
   async function connectBuffer() {
-    if (!form.bufferAccessToken) { toast.error("Buffer Access Token girin"); return; }
     setBufferConnecting(true);
     try {
-      const res = await fetch("/api/integrations/buffer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "connect", token: form.bufferAccessToken }),
-      });
+      const res = await fetch("/api/integrations/buffer/auth");
       const data = await res.json();
-      if (data.success) {
-        setBufferStatus({ connected: true, username: data.user?.name, profiles: data.profiles });
-        if (data.profiles?.[0]) setForm((f) => ({ ...f, bufferProfileId: data.profiles[0].id }));
-        toast.success("Buffer bağlandı!");
-      } else {
-        toast.error(data.error ?? "Bağlantı başarısız");
+      if (data.error) {
+        toast.error("BUFFER_CLIENT_ID ayarlanmamış. Vercel'e ekleyin.");
+        return;
       }
-    } catch { toast.error("Buffer API hatası"); }
+      // Redirect to Buffer OAuth
+      window.location.href = data.url;
+    } catch { toast.error("Buffer OAuth başlatılamadı"); }
     finally { setBufferConnecting(false); }
   }
 
@@ -296,6 +319,21 @@ function SettingsInner() {
           </ol>
         </div>
 
+        {/* Setup steps */}
+        <div className="bg-blue-950/20 border border-blue-800/30 rounded-xl p-3 space-y-1.5">
+          <p className="text-xs font-semibold text-blue-300">Kurulum (2 adım)</p>
+          <ol className="text-xs text-gray-400 space-y-1">
+            <li className="flex items-start gap-2">
+              <span className="w-4 h-4 rounded-full bg-blue-900 text-blue-300 text-xs flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+              <span><a href="https://buffer.com" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">buffer.com</a>'dan ücretsiz hesap aç → Instagram hesabını bağla</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="w-4 h-4 rounded-full bg-blue-900 text-blue-300 text-xs flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+              <span>Aşağıdaki butona tıkla → Buffer giriş sayfasına git → İzin ver → Otomatik bağlanır</span>
+            </li>
+          </ol>
+        </div>
+
         {bufferStatus.connected ? (
           <div className="space-y-3">
             <div className="bg-emerald-950/30 border border-emerald-800/40 rounded-xl p-4 flex items-center gap-3">
@@ -336,34 +374,19 @@ function SettingsInner() {
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Buffer Access Token</label>
-              <div className="relative">
-                <input
-                  type={showKeys["bufferToken"] ? "text" : "password"}
-                  className="input pr-10 text-sm"
-                  placeholder="1/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  value={form.bufferAccessToken}
-                  onChange={(e) => setForm({ ...form, bufferAccessToken: e.target.value })}
-                />
-                <button type="button" onClick={() => toggleShow("bufferToken")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
-                  {showKeys["bufferToken"] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={connectBuffer} disabled={bufferConnecting} className="btn-primary text-sm">
-                {bufferConnecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                {bufferConnecting ? "Bağlanıyor..." : "Buffer'a Bağlan"}
-              </button>
-              <a href="https://buffer.com/developers/apps" target="_blank" rel="noreferrer" className="btn-secondary text-sm">
-                <ExternalLink className="w-4 h-4" />
-                Token Al
-              </a>
-            </div>
-          </div>
+          <button
+            onClick={connectBuffer}
+            disabled={bufferConnecting}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl
+                       bg-[#2C4BFF] hover:bg-[#1a35e0] disabled:opacity-60
+                       text-white font-semibold transition-all duration-200"
+          >
+            {bufferConnecting
+              ? <RefreshCw className="w-5 h-5 animate-spin" />
+              : <svg className="w-5 h-5" viewBox="0 0 24 24" fill="white"><path d="M23.984 9.518a2.41 2.41 0 0 0-1.394-2.077L12.71 2.434a1.72 1.72 0 0 0-1.42 0L1.41 7.441A2.41 2.41 0 0 0 .016 9.518a2.41 2.41 0 0 0 1.394 2.077l9.88 5.007a1.72 1.72 0 0 0 1.42 0l9.88-5.007a2.41 2.41 0 0 0 1.394-2.077zm-1.5 4.977l-9.88 5.007a.22.22 0 0 1-.208 0L2.516 14.495a.92.92 0 0 0-.878 1.619l9.88 5.007a1.72 1.72 0 0 0 1.42 0l9.88-5.007a.92.92 0 0 0-.878-1.619z"/></svg>
+            }
+            {bufferConnecting ? "Buffer'a yönlendiriliyor..." : "Buffer ile Bağlan"}
+          </button>
         )}
       </div>
 
