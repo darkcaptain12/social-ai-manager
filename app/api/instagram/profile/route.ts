@@ -312,8 +312,13 @@ export async function POST(req: NextRequest) {
       }, { status: 404 });
     }
 
-    // AI analysis
-    const aiInsights = await analyzeProfileWithAI(profileData);
+    // AI analysis (non-fatal — profile is saved even if AI fails)
+    let aiInsights: Partial<InstagramProfileData> = {};
+    try {
+      aiInsights = await analyzeProfileWithAI(profileData);
+    } catch (aiErr) {
+      console.warn("[Profile] AI analysis failed:", aiErr instanceof Error ? aiErr.message : aiErr);
+    }
     const enriched: InstagramProfileData = { ...profileData, ...aiInsights };
 
     // Save

@@ -35,8 +35,13 @@ export default function AudiencePage() {
       } else {
         toast.error(data.error ?? "Profil bulunamadı");
       }
-    } catch {
-      toast.error("Bağlantı hatası");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("API key") || msg.includes("OpenAI") || msg.includes("Gemini")) {
+        toast.error("OpenAI API key eksik — Ayarlar sayfasından ekleyin");
+      } else {
+        toast.error("Bağlantı hatası: " + msg.slice(0, 80));
+      }
     } finally {
       setLoading(false);
     }
@@ -125,17 +130,19 @@ export default function AudiencePage() {
                 {profile.bio && (
                   <p className="text-sm text-gray-400 mt-2 leading-relaxed">{profile.bio}</p>
                 )}
-                {profile.niche && (
-                  <div className="flex gap-2 mt-2 flex-wrap">
-                    <span className="badge badge-purple">{profile.niche}</span>
-                    {profile.sector && <span className="badge badge-blue">{profile.sector}</span>}
+                <div className="flex gap-2 mt-2 flex-wrap">
+                    {profile.niche && profile.niche !== "Unknown" && (
+                      <span className="badge badge-purple">{profile.niche}</span>
+                    )}
+                    {profile.sector && profile.sector !== "Unknown" && (
+                      <span className="badge badge-blue">{profile.sector}</span>
+                    )}
                     {profile.dataSource && (
                       <span className="badge badge-yellow text-xs">
                         kaynak: {profile.dataSource}
                       </span>
                     )}
                   </div>
-                )}
               </div>
             </div>
           </div>
@@ -163,19 +170,19 @@ export default function AudiencePage() {
                 AI Analizi
               </h3>
               <div className="grid grid-cols-2 gap-4">
-                {profile.contentStyle && (
+                {profile.contentStyle && profile.contentStyle !== "Unknown" && (
                   <div className="bg-surface-muted rounded-lg p-3">
                     <p className="text-xs text-gray-500 mb-1">İçerik Stili</p>
                     <p className="text-sm text-gray-300">{profile.contentStyle}</p>
                   </div>
                 )}
-                {profile.audienceType && (
+                {profile.audienceType && profile.audienceType !== "Unknown" && (
                   <div className="bg-surface-muted rounded-lg p-3">
                     <p className="text-xs text-gray-500 mb-1">Hedef Kitle</p>
                     <p className="text-sm text-gray-300">{profile.audienceType}</p>
                   </div>
                 )}
-                {profile.engagementEstimate && (
+                {profile.engagementEstimate && !profile.engagementEstimate.toLowerCase().includes("unknown") && !profile.engagementEstimate.toLowerCase().includes("no ") && (
                   <div className="bg-surface-muted rounded-lg p-3">
                     <p className="text-xs text-gray-500 mb-1">Tahmini Etkileşim</p>
                     <p className="text-sm text-emerald-400">{profile.engagementEstimate}</p>
