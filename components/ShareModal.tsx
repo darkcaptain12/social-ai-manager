@@ -119,7 +119,7 @@ export function ShareModal({ caption, hashtags, imageUrl, onClose }: ShareModalP
         <div className="p-5 space-y-4">
 
           {/* Mobile: native share button */}
-          {isMobile && navigator.share && (
+          {isMobile && typeof navigator !== "undefined" && "share" in navigator && (
             <button
               onClick={nativeShare}
               className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl
