@@ -161,10 +161,9 @@ Return JSON:
 // ─── ROUTE HANDLERS ──────────────────────────────────────────────────────────
 
 export async function GET() {
-  const settings = await memory.getSettings();
   const saved = await memory.getSettings();
-  // Profile data is stored in settings under profileData key
-  const profileData = (saved as Record<string, unknown>).instagramProfileData as InstagramProfileData | undefined;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const profileData = (saved as any).instagramProfileData as InstagramProfileData | undefined;
   return NextResponse.json({ profile: profileData || null });
 }
 
@@ -185,8 +184,9 @@ export async function POST(req: NextRequest) {
     const aiInsights = await analyzeProfileWithAI(profileData);
     const enriched: InstagramProfileData = { ...profileData, ...aiInsights };
 
-    // 3. Save to memory
-    await memory.saveSettings({ instagramProfileData: enriched } as never);
+    // 3. Save to memory (stored as a custom key via type cast)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await memory.saveSettings({ instagramProfileData: enriched } as any);
 
     // 4. Also update brand niche if not set
     const brand = await memory.getBrand();
