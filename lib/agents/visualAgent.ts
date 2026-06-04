@@ -1,50 +1,48 @@
-import OpenAI from "openai";
+import { generateImageAI } from "./base";
 import { memory } from "@/lib/memory/store";
 
+/**
+ * Visual Agent
+ * Primary:  Gemini Imagen (gemini-2.0-flash-exp-image-generation)
+ * Fallback: OpenAI DALL-E 3
+ *
+ * Returns { url } for OpenAI results (hosted URL)
+ *      or { url } for Gemini results (data URL so it can be used in <img>)
+ */
 export async function generateImage(params: {
-  prompt: string; style?: "natural" | "vivid"; size?: "1024x1024" | "1024x1792" | "1792x1024";
-}): Promise<{ url: string; revisedPrompt?: string }> {
-  const settings = await memory.getSettings();
-  if (!settings.openaiApiKey) throw new Error("OpenAI API key not configured");
-
-  const client = new OpenAI({ apiKey: settings.openaiApiKey });
+  prompt: string;
+  size?: "1024x1024" | "1024x1792" | "1792x1024";
+}): Promise<{ url: string; source: "gemini" | "openai"; revisedPrompt?: string }> {
   const brand = await memory.getBrand();
-  const brandContext = brand ? ` Brand colors: ${brand.colorPalette.join(", ")}. Style: modern, professional, Instagram-ready.` : "";
+  const brandContext = brand
+    ? ` Style: modern, professional, Instagram-ready. Brand colors: ${brand.colorPalette.join(", ")}.`
+    : " Style: modern, professional, Instagram-ready.";
 
-  const response = await client.images.generate({
-    model: "dall-e-3",
-    prompt: params.prompt + brandContext,
-    size: params.size ?? "1024x1024",
-    quality: "hd",
-    style: params.style ?? "vivid",
-    n: 1,
-  });
+  const enrichedPrompt = params.prompt + brandContext;
+  const result = await generateImageAI(enrichedPrompt);
 
-  const image = response.data?.[0];
-  return { url: image?.url ?? "", revisedPrompt: image?.revised_prompt };
+  // Gemini returns base64 — convert to data URL
+  if (result.source === "gemini" && result.base64) {
+    const dataUrl = `data:${result.mimeType ?? "image/png"};base64,${result.base64}`;
+    return { url: dataUrl, source: "gemini" };
+  }
+
+  // OpenAI returns a hosted URL
+  return { url: result.url ?? "", source: "openai" };
 }
 
-export async function generateMultipleVariants(basePrompt: string, count = 3): Promise<string[]> {
-  const settings = await memory.getSettings();
-  if (!settings.openaiApiKey) throw new Error("OpenAI API key not configured");
-
-  const client = new OpenAI({ apiKey: settings.openaiApiKey });
-  const urls: string[] = [];
-  const styles: Array<"vivid" | "natural"> = ["vivid", "natural", "vivid"];
-
-  for (let i = 0; i < Math.min(count, 3); i++) {
+export async function generateMultipleVariants(
+  basePrompt: string,
+  count = 3
+): Promise<string[]> {
+  const results: string[] = [];
+  for (let i = 0; i < count; i++) {
     try {
-      const response = await client.images.generate({
-        model: "dall-e-3",
-        prompt: `${basePrompt} - variation ${i + 1}`,
-        size: "1024x1024",
-        quality: "standard",
-        style: styles[i],
-        n: 1,
-      });
-      const url = response.data?.[0]?.url;
-      if (url) urls.push(url);
-    } catch { /* skip failed */ }
+      const r = await generateImage({ prompt: `${basePrompt} — variation ${i + 1}` });
+      if (r.url) results.push(r.url);
+    } catch {
+      /* skip failed variants */
+    }
   }
-  return urls;
+  return results;
 }

@@ -165,6 +165,7 @@ export interface AnalyticsSnapshot {
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
 export interface Settings {
   openaiApiKey?: string;
+  geminiApiKey?: string;   // image generation (Imagen) + text fallback
   imageProvider: "openai" | "ideogram" | "flux" | "stability" | "replicate";
   instagramAccessToken?: string;
   instagramAccountId?: string;

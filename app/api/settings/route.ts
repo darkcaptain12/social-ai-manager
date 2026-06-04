@@ -6,6 +6,7 @@ export async function GET() {
   return NextResponse.json({
     ...settings,
     openaiApiKey: settings.openaiApiKey ? "sk-...****" : undefined,
+    geminiApiKey: settings.geminiApiKey ? "AIza...****" : undefined,
     instagramAccessToken: settings.instagramAccessToken ? "EAAG...****" : undefined,
   });
 }

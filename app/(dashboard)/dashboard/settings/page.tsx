@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 interface SettingsForm {
   openaiApiKey: string;
+  geminiApiKey: string;
   imageProvider: string;
   instagramAccessToken: string;
   instagramAccountId: string;
@@ -54,6 +55,7 @@ export default function SettingsPage() {
 function SettingsInner() {
   const [form, setForm] = useState<SettingsForm>({
     openaiApiKey: "",
+    geminiApiKey: "",
     imageProvider: "openai", instagramAccessToken: "", instagramAccountId: "",
     bufferAccessToken: "", bufferProfileId: "",
     language: "tr", autoSchedule: false, nightly_jobs: true,
@@ -199,7 +201,8 @@ function SettingsInner() {
   }
 
   const apiKeys = [
-    { key: "openaiApiKey", label: "OpenAI API Key", placeholder: "sk-..." },
+    { key: "openaiApiKey", label: "OpenAI API Key — Metin (GPT-4o)", placeholder: "sk-...", hint: "Metin üretimi için birincil. Hata verirse Gemini devreye girer." },
+    { key: "geminiApiKey", label: "Google Gemini API Key — Görsel + Yedek", placeholder: "AIza...", hint: "Görsel üretimi (Imagen) + OpenAI hata verirse metin yedek." },
   ];
 
   return (
@@ -224,9 +227,10 @@ function SettingsInner() {
       <div className="card space-y-4">
         <h3 className="font-semibold text-white">AI API Anahtarları</h3>
         <p className="text-xs text-gray-500">Anahtarlar şifreli olarak saklanır. Asla dışa aktarılmaz.</p>
-        {apiKeys.map(({ key, label, placeholder }) => (
+        {apiKeys.map(({ key, label, placeholder, hint }) => (
           <div key={key}>
             <label className="text-xs text-gray-400 mb-1 block">{label}</label>
+            {hint && <p className="text-xs text-gray-600 mb-1.5">{hint}</p>}
             <div className="relative">
               <input
                 type={showKeys[key] ? "text" : "password"}

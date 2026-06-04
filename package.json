@@ -11,6 +11,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^0.0.36",
     "@anthropic-ai/sdk": "^0.100.1",
+    "@google/generative-ai": "^0.24.1",
     "@radix-ui/react-avatar": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-dropdown-menu": "^2.1.1",
