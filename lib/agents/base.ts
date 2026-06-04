@@ -65,14 +65,14 @@ export async function generateImageAI(prompt: string): Promise<{
 
       const result = await model.generateContent({
         contents: [{ role: "user", parts: [{ text: prompt }] }],
-        // @ts-expect-error responseModalities is a valid config for image models
-        generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        generationConfig: { responseModalities: ["IMAGE", "TEXT"] } as any,
       });
 
       const parts = result.response.candidates?.[0]?.content?.parts ?? [];
       for (const part of parts) {
-        // @ts-expect-error inlineData exists on image parts
-        const inlineData = part.inlineData;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const inlineData = (part as any).inlineData;
         if (inlineData?.data) {
           return {
             base64: inlineData.data,
