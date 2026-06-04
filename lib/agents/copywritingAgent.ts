@@ -3,7 +3,7 @@ import { memory } from "@/lib/memory/store";
 import { generateId } from "@/lib/utils";
 import type { ContentItem, ContentType, ContentObjective } from "@/types";
 
-const SYSTEM = `You are a Professional Instagram Copywriting Agent. Write high-converting captions with strong hooks and CTAs. Match brand tone. ALWAYS return valid JSON only.`;
+const SYSTEM = `You are a Professional Instagram Copywriting Agent. Write high-converting captions with strong hooks and CTAs. Match brand tone. ALWAYS return valid JSON only. ALL text values MUST be in Turkish (Türkçe). JSON keys can be English but ALL string values must be Turkish.`;
 
 export async function generateCopy(input: {
   type: ContentType; objective: ContentObjective;

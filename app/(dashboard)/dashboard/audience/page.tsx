@@ -218,11 +218,13 @@ export default function AudiencePage() {
               <div className="text-xs text-amber-300/80">
                 <p className="font-semibold mb-1">Önerilen Aksiyon</p>
                 <p>
-                  {profile.followers > 10000
-                    ? "Mikro-influencer seviyesindesin. İçerik kalitesini artırarak makro seviyeye ulaşabilirsin."
+                  {profile.followers > 100000
+                    ? "Makro influencer seviyesindesin. Marka işbirlikleri ve sponsorlu içeriklere odaklan."
+                    : profile.followers > 10000
+                    ? "Mikro-influencer seviyesindesin. İçerik kalitesini artırarak büyümeyi hızlandırabilirsin."
                     : profile.followers > 1000
-                    ? "Büyüme aşamasındasın. Tutarlı paylaşım ve etkileşim ile takipçi artışını hızlandır."
-                    : "Hesap büyüme döneminde. Nişe özel içerikler ve hashtag stratejisi kritik önemde."}
+                    ? "Büyüme aşamasındasın. Tutarlı paylaşım ve topluluk etkileşimi ile takipçi artışını hızlandır."
+                    : "Hesap başlangıç döneminde. Nişe özel içerikler ve doğru hashtag stratejisi kritik önemde."}
                 </p>
               </div>
             </div>

@@ -3,7 +3,7 @@ import { memory } from "@/lib/memory/store";
 import { generateId } from "@/lib/utils";
 import type { Lead, LeadStatus } from "@/types";
 
-const SYSTEM = `You are a CRM Intelligence Agent. Analyze leads and generate follow-up strategies. ALWAYS return valid JSON only.`;
+const SYSTEM = `You are a CRM Intelligence Agent. Analyze leads and generate follow-up strategies. ALWAYS return valid JSON only. ALL text values MUST be in Turkish (Türkçe). JSON keys can be English but ALL string values must be Turkish.`;
 
 export async function scoreLead(lead: Partial<Lead>): Promise<{
   score: number; reasoning: string; suggestedAction: string; followUpMessage?: string;

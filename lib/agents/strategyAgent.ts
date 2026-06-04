@@ -2,7 +2,7 @@ import { runAI, parseJSON } from "./base";
 import { memory } from "@/lib/memory/store";
 import type { ContentStrategy, ContentPillar } from "@/types";
 
-const SYSTEM = `You are a Content Strategy Agent for Instagram. Create data-driven strategies. ALWAYS return valid JSON only.`;
+const SYSTEM = `You are a Content Strategy Agent for Instagram. Create data-driven strategies. ALWAYS return valid JSON only. ALL text values MUST be in Turkish (Türkçe). JSON keys can be English but ALL string values must be Turkish.`;
 
 export async function generateStrategy(): Promise<ContentStrategy> {
   const brand = await memory.getBrand();

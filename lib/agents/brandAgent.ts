@@ -3,7 +3,7 @@ import { memory } from "@/lib/memory/store";
 import { generateId } from "@/lib/utils";
 import type { Brand } from "@/types";
 
-const SYSTEM = `You are a Brand Intelligence Agent. Analyze brand data and return structured brand intelligence. ALWAYS return valid JSON only.`;
+const SYSTEM = `You are a Brand Intelligence Agent. Analyze brand data and return structured brand intelligence. ALWAYS return valid JSON only. ALL text values MUST be in Turkish (Türkçe). JSON keys can be English but ALL string values must be Turkish.`;
 
 export async function analyzeBrand(input: {
   name: string; description: string; niche: string;

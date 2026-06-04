@@ -3,7 +3,7 @@ import { memory } from "@/lib/memory/store";
 import { generateId } from "@/lib/utils";
 import type { Competitor } from "@/types";
 
-const SYSTEM = `You are a Competitor Analysis Agent. Analyze Instagram competitors and find content gaps. ALWAYS return valid JSON only.`;
+const SYSTEM = `You are a Competitor Analysis Agent. Analyze Instagram competitors and find content gaps. ALWAYS return valid JSON only. ALL text values MUST be in Turkish (Türkçe). JSON keys can be English but ALL string values must be Turkish.`;
 
 export async function analyzeCompetitor(input: { name: string; instagramHandle: string; niche?: string }): Promise<Competitor> {
   const brand = await memory.getBrand();

@@ -3,7 +3,7 @@ import { memory } from "@/lib/memory/store";
 import { generateId } from "@/lib/utils";
 import type { TrendItem } from "@/types";
 
-const SYSTEM = `You are a Viral Content Intelligence Agent for Instagram. Detect trending formats and viral patterns. ALWAYS return valid JSON only.`;
+const SYSTEM = `You are a Viral Content Intelligence Agent for Instagram. Detect trending formats and viral patterns. ALWAYS return valid JSON only. ALL text values MUST be in Turkish (Türkçe). JSON keys can be English but ALL string values must be Turkish.`;
 
 export async function detectTrends(): Promise<TrendItem[]> {
   const brand = await memory.getBrand();

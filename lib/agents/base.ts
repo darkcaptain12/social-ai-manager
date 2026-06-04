@@ -3,6 +3,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { memory } from "@/lib/memory/store";
 
 // ─── TEXT: OpenAI GPT-4o → fallback Gemini 1.5 Flash ─────────────────────────
+const TR_SUFFIX = "\n\nÖNEMLİ: Tüm metin içerikleri (açıklamalar, öneriler, analizler, hook'lar, caption'lar, başlıklar) MUTLAKA TÜRKÇE olmalı. JSON key'leri İngilizce kalabilir ama value'lar Türkçe olmalı.";
+
 export async function runAI(systemPrompt: string, userMessage: string): Promise<string> {
   const settings = await memory.getSettings();
 
@@ -13,7 +15,7 @@ export async function runAI(systemPrompt: string, userMessage: string): Promise<
       const response = await client.chat.completions.create({
         model: "gpt-4o",
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: systemPrompt + TR_SUFFIX },
           { role: "user", content: userMessage },
         ],
         response_format: { type: "json_object" },
@@ -32,7 +34,7 @@ export async function runAI(systemPrompt: string, userMessage: string): Promise<
       const genAI = new GoogleGenerativeAI(settings.geminiApiKey);
       const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       const result = await model.generateContent(
-        `${systemPrompt}\n\n${userMessage}\n\nRespond with valid JSON only.`
+        `${systemPrompt}${TR_SUFFIX}\n\n${userMessage}\n\nSadece geçerli JSON döndür.`
       );
       return result.response.text();
     } catch (err) {

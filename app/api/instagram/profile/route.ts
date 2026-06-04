@@ -274,16 +274,16 @@ Profile:
 
 Return JSON:
 {
-  "niche": "specific niche (e.g. Specialty Coffee, Fashion & Lifestyle, Digital Marketing)",
-  "sector": "broad sector (e.g. Food & Beverage, E-commerce, Personal Brand)",
-  "contentStyle": "e.g. Educational, behind-the-scenes, product showcases",
-  "audienceType": "e.g. Young professionals 25-35, urban, tech-savvy",
-  "engagementEstimate": "e.g. Above average (~4-6%)",
-  "insights": ["insight 1", "insight 2", "insight 3", "insight 4", "insight 5"]
+  "niche": "spesifik niş (örn. Özel Kahve, Moda & Yaşam, Dijital Pazarlama)",
+  "sector": "geniş sektör (örn. Yiyecek & İçecek, E-Ticaret, Kişisel Marka)",
+  "contentStyle": "örn. Eğitici, sahne arkası, ürün tanıtımları",
+  "audienceType": "örn. 25-35 yaş arası genç profesyoneller, kentsel, teknoloji meraklısı",
+  "engagementEstimate": "örn. Ortalamanın üstünde (~%4-6)",
+  "insights": ["içgörü 1", "içgörü 2", "içgörü 3", "içgörü 4", "içgörü 5"]
 }`;
 
   const raw = await runAI(
-    "You are an Instagram marketing analyst. Analyze profiles and extract business intelligence. Return valid JSON only.",
+    "Sen bir Instagram pazarlama analistsin. Profilleri analiz edip iş zekası çıkarırsın. Tüm yanıtlar TÜRKÇE olmalı. Sadece geçerli JSON döndür.",
     prompt
   );
   return parseJSON<Partial<InstagramProfileData>>(raw, {});
