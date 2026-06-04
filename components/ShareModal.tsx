@@ -44,17 +44,14 @@ export function ShareModal({ caption, hashtags, imageUrl, onClose }: ShareModalP
   }
 
   function openInstagram() {
-    // Try mobile deep link first, fallback to web
-    const mobileLink = "instagram://camera";
-    const webLink = "https://www.instagram.com/create/select/";
-
     if (isMobile) {
-      // Try app deep link
-      window.location.href = mobileLink;
+      // Deep link directly to Instagram app
+      window.location.href = "instagram://app";
       // Fallback to web after 1.5s if app not installed
-      setTimeout(() => { window.open(webLink, "_blank"); }, 1500);
+      setTimeout(() => { window.location.href = "https://www.instagram.com/"; }, 1500);
     } else {
-      window.open(webLink, "_blank");
+      // Desktop: open in same tab to avoid popup blocker
+      window.location.href = "https://www.instagram.com/";
     }
   }
 
@@ -231,22 +228,33 @@ export function ShareModal({ caption, hashtags, imageUrl, onClose }: ShareModalP
             )}
 
             {/* Step 3: Open Instagram */}
-            <button
-              onClick={openInstagram}
-              disabled={step < (imageUrl ? 3 : 2)}
-              className={cn(
-                "w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all",
-                step >= (imageUrl ? 3 : 2)
-                  ? "bg-gradient-to-r from-pink-500 via-purple-500 to-orange-400 text-white shadow-lg hover:opacity-90"
-                  : "bg-surface-muted border border-surface-border text-gray-600 cursor-not-allowed opacity-50"
-              )}
-            >
-              <Instagram className="w-5 h-5 flex-shrink-0" />
-              <span className="flex-1 text-left">
-                {isMobile ? "Instagram Uygulamasını Aç" : "Instagram.com'u Aç"}
-              </span>
-              <ExternalLink className="w-4 h-4 opacity-70" />
-            </button>
+            {step >= (imageUrl ? 3 : 2) ? (
+              <a
+                href={isMobile ? "instagram://app" : "https://www.instagram.com/"}
+                target={isMobile ? "_self" : "_blank"}
+                rel="noreferrer"
+                onClick={() => {
+                  if (isMobile) {
+                    setTimeout(() => { window.location.href = "https://www.instagram.com/"; }, 1500);
+                  }
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm
+                           bg-gradient-to-r from-pink-500 via-purple-500 to-orange-400
+                           text-white shadow-lg hover:opacity-90 transition-all"
+              >
+                <Instagram className="w-5 h-5 flex-shrink-0" />
+                <span className="flex-1 text-left">
+                  {isMobile ? "Instagram Uygulamasını Aç" : "Instagram.com'u Aç"}
+                </span>
+                <ExternalLink className="w-4 h-4 opacity-70" />
+              </a>
+            ) : (
+              <div className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm
+                              bg-surface-muted border border-surface-border text-gray-600 opacity-50 cursor-not-allowed">
+                <Instagram className="w-5 h-5 flex-shrink-0" />
+                <span>{isMobile ? "Instagram Uygulamasını Aç" : "Instagram.com'u Aç"}</span>
+              </div>
+            )}
           </div>
 
           {/* Hint */}
