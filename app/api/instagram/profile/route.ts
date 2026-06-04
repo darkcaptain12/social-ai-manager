@@ -299,12 +299,36 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { username } = await req.json();
+    const body = await req.json();
+    const { username, manualOverride } = body;
     if (!username) return NextResponse.json({ error: "Username required" }, { status: 400 });
 
     const clean = cleanUsername(username);
 
-    const profileData = await fetchInstagramProfile(clean);
+    let profileData = await fetchInstagramProfile(clean);
+
+    // Apply manual stat overrides (user-provided numbers)
+    if (manualOverride && profileData) {
+      profileData = {
+        ...profileData,
+        followers: manualOverride.followers ?? profileData.followers,
+        following: manualOverride.following ?? profileData.following,
+        posts: manualOverride.posts ?? profileData.posts,
+      };
+    } else if (manualOverride && !profileData) {
+      // Create minimal profile from username + manual stats
+      profileData = {
+        username: clean,
+        fullName: clean,
+        bio: "",
+        followers: manualOverride.followers ?? 0,
+        following: manualOverride.following ?? 0,
+        posts: manualOverride.posts ?? 0,
+        isVerified: false,
+        fetchedAt: new Date().toISOString(),
+        dataSource: "manual",
+      };
+    }
 
     if (!profileData) {
       return NextResponse.json({
