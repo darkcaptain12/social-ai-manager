@@ -95,7 +95,6 @@ export async function generateImageAI(prompt: string): Promise<{
       prompt,
       size: "1024x1024",
       quality: "hd",
-      style: "vivid",
       n: 1,
     });
     return {
