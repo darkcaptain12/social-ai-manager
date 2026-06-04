@@ -9,9 +9,9 @@ export async function GET() {
 
   // Replace sensitive values with boolean flags (true = set, false/undefined = not set)
   // This prevents masked values from being accidentally saved back
-  const safe: Record<string, unknown> = { ...settings };
+  const safe: Record<string, unknown> = { ...(settings as unknown as Record<string, unknown>) };
   for (const key of SENSITIVE_KEYS) {
-    safe[key] = !!(settings as Record<string, unknown>)[key] ? "__SET__" : undefined;
+    safe[key] = !!safe[key] ? "__SET__" : undefined;
   }
 
   return NextResponse.json(safe);
