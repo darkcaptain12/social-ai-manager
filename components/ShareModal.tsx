@@ -4,14 +4,24 @@ import { useState } from "react";
 import { Instagram, Copy, Check, Download, ExternalLink, X, Smartphone, Monitor } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type ContentType = "post" | "story" | "reel" | "carousel";
+
 interface ShareModalProps {
   caption: string;
   hashtags: string[];
   imageUrl?: string;
+  contentType?: ContentType;
   onClose: () => void;
 }
 
-export function ShareModal({ caption, hashtags, imageUrl, onClose }: ShareModalProps) {
+const IG_LINKS: Record<ContentType, { mobile: string; web: string; label: string }> = {
+  post:     { mobile: "instagram://library",          web: "https://www.instagram.com/create/select/", label: "Post Paylaşımı Aç" },
+  carousel: { mobile: "instagram://library",          web: "https://www.instagram.com/create/select/", label: "Carousel Paylaşımı Aç" },
+  reel:     { mobile: "instagram://reels_nux_entry",  web: "https://www.instagram.com/reels/",          label: "Reels Oluştur" },
+  story:    { mobile: "instagram://story-camera",     web: "https://www.instagram.com/",               label: "Story Oluştur" },
+};
+
+export function ShareModal({ caption, hashtags, imageUrl, contentType = "post", onClose }: ShareModalProps) {
   const [captionCopied, setCaptionCopied] = useState(false);
   const [hashtagsCopied, setHashtagsCopied] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -19,6 +29,7 @@ export function ShareModal({ caption, hashtags, imageUrl, onClose }: ShareModalP
   const fullCaption = `${caption}\n\n${hashtags.map((h) => `#${h}`).join(" ")}`;
   const hashtagText = hashtags.map((h) => `#${h}`).join(" ");
   const isMobile = typeof navigator !== "undefined" && /iPhone|iPad|Android/i.test(navigator.userAgent);
+  const igLinks = IG_LINKS[contentType];
 
   async function copyCaption() {
     await navigator.clipboard.writeText(fullCaption);
@@ -45,13 +56,10 @@ export function ShareModal({ caption, hashtags, imageUrl, onClose }: ShareModalP
 
   function openInstagram() {
     if (isMobile) {
-      // Deep link directly to Instagram app
-      window.location.href = "instagram://app";
-      // Fallback to web after 1.5s if app not installed
-      setTimeout(() => { window.location.href = "https://www.instagram.com/"; }, 1500);
+      window.location.href = igLinks.mobile;
+      setTimeout(() => { window.location.href = igLinks.web; }, 1500);
     } else {
-      // Desktop: open in same tab to avoid popup blocker
-      window.location.href = "https://www.instagram.com/";
+      window.location.href = igLinks.web;
     }
   }
 
@@ -104,8 +112,10 @@ export function ShareModal({ caption, hashtags, imageUrl, onClose }: ShareModalP
               <Instagram className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-white">Instagram'da Paylaş</h2>
-              <p className="text-xs text-gray-500">3 adımda paylaş</p>
+              <h2 className="font-bold text-white">{igLinks.label}</h2>
+              <p className="text-xs text-gray-500">
+                {contentType === "reel" ? "🎬 Reel" : contentType === "story" ? "📸 Story" : contentType === "carousel" ? "🖼️ Carousel" : "📷 Post"} • 3 adımda paylaş
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors p-1">
@@ -244,7 +254,7 @@ export function ShareModal({ caption, hashtags, imageUrl, onClose }: ShareModalP
               >
                 <Instagram className="w-5 h-5 flex-shrink-0" />
                 <span className="flex-1 text-left">
-                  {isMobile ? "Instagram Uygulamasını Aç" : "Instagram.com'u Aç"}
+                  {igLinks.label}
                 </span>
                 <ExternalLink className="w-4 h-4 opacity-70" />
               </a>
@@ -252,7 +262,7 @@ export function ShareModal({ caption, hashtags, imageUrl, onClose }: ShareModalP
               <div className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm
                               bg-surface-muted border border-surface-border text-gray-600 opacity-50 cursor-not-allowed">
                 <Instagram className="w-5 h-5 flex-shrink-0" />
-                <span>{isMobile ? "Instagram Uygulamasını Aç" : "Instagram.com'u Aç"}</span>
+                <span>{igLinks.label}</span>
               </div>
             )}
           </div>

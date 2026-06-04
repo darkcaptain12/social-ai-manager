@@ -323,6 +323,7 @@ export default function CreatePage() {
           caption={content.caption}
           hashtags={content.hashtags}
           imageUrl={imageUrl ?? undefined}
+          contentType={content.type}
           onClose={() => setShowShareModal(false)}
         />
       )}
