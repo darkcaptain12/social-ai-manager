@@ -1,4 +1,4 @@
-import { runClaude, parseJSON } from "./base";
+import { runAI, parseJSON } from "./base";
 import { memory } from "@/lib/memory/store";
 import { generateId } from "@/lib/utils";
 import type { ContentItem, ContentType, ContentObjective } from "@/types";
@@ -33,7 +33,7 @@ Return JSON:
   "imagePrompt": string (detailed DALL-E prompt)
 }`;
 
-  const raw = await runClaude(SYSTEM, prompt);
+  const raw = await runAI(SYSTEM, prompt);
   const parsed = parseJSON<Partial<ContentItem>>(raw, {});
 
   const item: ContentItem = {
@@ -65,6 +65,6 @@ New: "${hook}"
 Recent:\n${history.slice(-30).map((c, i) => `${i + 1}. "${c.hook}"`).join("\n")}
 Return JSON: { "isDuplicate": boolean, "similarityScore": 0-100, "suggestion": string }`;
 
-  const raw = await runClaude(SYSTEM, prompt);
+  const raw = await runAI(SYSTEM, prompt);
   return parseJSON(raw, { isDuplicate: false, similarityScore: 0 });
 }

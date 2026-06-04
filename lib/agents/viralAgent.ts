@@ -1,4 +1,4 @@
-import { runClaude, parseJSON } from "./base";
+import { runAI, parseJSON } from "./base";
 import { memory } from "@/lib/memory/store";
 import { generateId } from "@/lib/utils";
 import type { TrendItem } from "@/types";
@@ -15,7 +15,7 @@ Market: ${brand?.language === "tr" ? "Turkish Instagram" : "Global Instagram"}
 Return JSON array of 8-10 trends:
 [{ "id": string, "title": string, "description": string, "format": "reel|carousel|single_image|story", "hook": string, "viralScore": 1-100, "niche": string, "detectedAt": ISO, "expiresAt": ISO (2-4 weeks) }]`;
 
-  const raw = await runClaude(SYSTEM, prompt);
+  const raw = await runAI(SYSTEM, prompt);
   const parsed = parseJSON<TrendItem[]>(raw, []);
   const trends = parsed.map((t) => ({ ...t, id: t.id || generateId() }));
 
@@ -39,6 +39,6 @@ Trend: ${JSON.stringify(trend)}
 Brand: ${JSON.stringify({ name: brand?.name, niche: brand?.niche, tone: brand?.toneOfVoice, language: brand?.language })}
 Return JSON: { "template": string (with [PLACEHOLDERS]), "hooks": [5 adapted variations], "adaptedCaption": string }`;
 
-  const raw = await runClaude(SYSTEM, prompt);
+  const raw = await runAI(SYSTEM, prompt);
   return parseJSON(raw, { template: "", hooks: [], adaptedCaption: "" });
 }

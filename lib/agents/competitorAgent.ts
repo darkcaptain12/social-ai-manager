@@ -1,4 +1,4 @@
-import { runClaude, parseJSON } from "./base";
+import { runAI, parseJSON } from "./base";
 import { memory } from "@/lib/memory/store";
 import { generateId } from "@/lib/utils";
 import type { Competitor } from "@/types";
@@ -18,7 +18,7 @@ Return JSON:
   "topHashtags": [10], "contentGaps": [3-5], "opportunities": [3-5]
 }`;
 
-  const raw = await runClaude(SYSTEM, prompt);
+  const raw = await runAI(SYSTEM, prompt);
   const parsed = parseJSON<Partial<Competitor>>(raw, {});
   const competitor: Competitor = {
     id: parsed.id ?? generateId(),
@@ -49,6 +49,6 @@ Brand: ${JSON.stringify(brand)}
 Competitors: ${JSON.stringify(competitors)}
 Return JSON: { "summary": string, "marketGaps": [5], "winningAngles": [5], "contentIdeas": [10] }`;
 
-  const raw = await runClaude(SYSTEM, prompt);
+  const raw = await runAI(SYSTEM, prompt);
   return parseJSON(raw, { summary: "", marketGaps: [], winningAngles: [], contentIdeas: [] });
 }

@@ -8,8 +8,6 @@ import { cn } from "@/lib/utils";
 
 interface SettingsForm {
   openaiApiKey: string;
-  anthropicApiKey: string;
-  geminiApiKey: string;
   imageProvider: string;
   instagramAccessToken: string;
   instagramAccountId: string;
@@ -55,7 +53,7 @@ export default function SettingsPage() {
 
 function SettingsInner() {
   const [form, setForm] = useState<SettingsForm>({
-    openaiApiKey: "", anthropicApiKey: "", geminiApiKey: "",
+    openaiApiKey: "",
     imageProvider: "openai", instagramAccessToken: "", instagramAccountId: "",
     bufferAccessToken: "", bufferProfileId: "",
     language: "tr", autoSchedule: false, nightly_jobs: true,
@@ -202,8 +200,6 @@ function SettingsInner() {
 
   const apiKeys = [
     { key: "openaiApiKey", label: "OpenAI API Key", placeholder: "sk-..." },
-    { key: "anthropicApiKey", label: "Anthropic (Claude) API Key", placeholder: "sk-ant-..." },
-    { key: "geminiApiKey", label: "Google Gemini API Key", placeholder: "AI..." },
   ];
 
   return (

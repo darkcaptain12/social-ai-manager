@@ -1,4 +1,4 @@
-import { runClaude, parseJSON } from "./base";
+import { runAI, parseJSON } from "./base";
 import { memory } from "@/lib/memory/store";
 import { generateId } from "@/lib/utils";
 import type { Brand } from "@/types";
@@ -26,7 +26,7 @@ Return JSON:
   "updatedAt": ISO date
 }`;
 
-  const raw = await runClaude(SYSTEM, prompt);
+  const raw = await runAI(SYSTEM, prompt);
   const parsed = parseJSON<Partial<Brand>>(raw, {});
   const brand: Brand = {
     id: parsed.id ?? generateId(),
@@ -55,6 +55,6 @@ export async function getBrandInsights(): Promise<{
 Brand: ${JSON.stringify(brand, null, 2)}
 Return JSON: { "strengths": [3-5], "weaknesses": [2-3], "opportunities": [3-5], "recommendations": [5] }`;
 
-  const raw = await runClaude(SYSTEM, prompt);
+  const raw = await runAI(SYSTEM, prompt);
   return parseJSON(raw, { strengths: [], weaknesses: [], opportunities: [], recommendations: [] });
 }

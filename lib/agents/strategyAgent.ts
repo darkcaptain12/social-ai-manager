@@ -1,4 +1,4 @@
-import { runClaude, parseJSON } from "./base";
+import { runAI, parseJSON } from "./base";
 import { memory } from "@/lib/memory/store";
 import type { ContentStrategy, ContentPillar } from "@/types";
 
@@ -30,7 +30,7 @@ Return JSON:
 }
 Make 4-5 pillars summing to 100. Put 1-2 items per day.`;
 
-  const raw = await runClaude(SYSTEM, prompt);
+  const raw = await runAI(SYSTEM, prompt);
   const parsed = parseJSON<Partial<ContentStrategy>>(raw, {});
 
   const strategy: ContentStrategy = {

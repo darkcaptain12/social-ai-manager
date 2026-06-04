@@ -1,4 +1,4 @@
-import { runClaude, parseJSON } from "./base";
+import { runAI, parseJSON } from "./base";
 import { memory } from "@/lib/memory/store";
 import { generateId } from "@/lib/utils";
 import type { Lead, LeadStatus } from "@/types";
@@ -14,7 +14,7 @@ Brand: ${JSON.stringify({ name: brand?.name, targetAudience: brand?.targetAudien
 Lead: ${JSON.stringify(lead)}
 Return JSON: { "score": 1-100, "reasoning": string, "suggestedAction": "dm|comment|follow|ignore", "followUpMessage": string }`;
 
-  const raw = await runClaude(SYSTEM, prompt);
+  const raw = await runAI(SYSTEM, prompt);
   return parseJSON(raw, { score: 50, reasoning: "", suggestedAction: "follow" });
 }
 
@@ -27,7 +27,7 @@ export async function generateLeads(params: { niche?: string; count?: number }):
 Target audience: ${brand?.targetAudience ?? "general"}
 Return JSON array: [{ "id": string, "name": string, "instagramHandle": string, "status": "new", "priorityScore": 1-100, "notes": string, "tags": [2-3], "createdAt": ISO, "updatedAt": ISO }]`;
 
-  const raw = await runClaude(SYSTEM, prompt);
+  const raw = await runAI(SYSTEM, prompt);
   const parsed = parseJSON<Lead[]>(raw, []);
   const leads = parsed.map((l) => ({
     ...l, id: l.id || generateId(),
