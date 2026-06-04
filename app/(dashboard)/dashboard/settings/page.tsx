@@ -70,17 +70,26 @@ function SettingsInner() {
   const [appIdMissing, setAppIdMissing] = useState(false);
   const searchParams = useSearchParams();
 
+  const [savedKeys, setSavedKeys] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     fetch("/api/settings")
       .then((r) => r.json())
       .then((d) => {
-        setForm((prev) => ({ ...prev, ...d }));
-        // If token exists in settings, mark as connected
-        if (d.instagramAccessToken) {
-          setIgStatus({
-            connected: true,
-            accountId: d.instagramAccountId,
-          });
+        // Track which sensitive keys are already saved (show badge, not value)
+        const saved: Record<string, boolean> = {};
+        const clean = { ...d };
+        for (const key of ["openaiApiKey", "geminiApiKey", "instagramAccessToken", "bufferAccessToken"]) {
+          if (d[key] === "__SET__") {
+            saved[key] = true;
+            clean[key] = ""; // Don't put masked value in input
+          }
+        }
+        setSavedKeys(saved);
+        setForm((prev) => ({ ...prev, ...clean }));
+
+        if (d.instagramAccessToken === "__SET__") {
+          setIgStatus({ connected: true, accountId: d.instagramAccountId });
         }
       });
   }, []);
@@ -229,13 +238,20 @@ function SettingsInner() {
         <p className="text-xs text-gray-500">Anahtarlar şifreli olarak saklanır. Asla dışa aktarılmaz.</p>
         {apiKeys.map(({ key, label, placeholder, hint }) => (
           <div key={key}>
-            <label className="text-xs text-gray-400 mb-1 block">{label}</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs text-gray-400">{label}</label>
+              {savedKeys[key] && (
+                <span className="badge badge-green flex items-center gap-1 text-xs">
+                  <CheckCircle2 className="w-3 h-3" /> Kayıtlı
+                </span>
+              )}
+            </div>
             {hint && <p className="text-xs text-gray-600 mb-1.5">{hint}</p>}
             <div className="relative">
               <input
                 type={showKeys[key] ? "text" : "password"}
                 className="input pr-10"
-                placeholder={placeholder}
+                placeholder={savedKeys[key] ? "Yeni key girmek için yazın (boş bırakırsanız mevcut korunur)" : placeholder}
                 value={(form as unknown as Record<string, string>)[key] ?? ""}
                 onChange={(e) => setForm({ ...form, [key]: e.target.value })}
               />
