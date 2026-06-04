@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { memory } from "@/lib/memory/store";
 import { getInstagramProfiles } from "@/lib/integrations/buffer";
 
 /**
- * Buffer OAuth 2.0 Callback
+ * Buffer OAuth 2.0 PKCE Callback.
  * Buffer redirects here with ?code=... after user authorizes.
+ * We exchange the code + code_verifier for an access token.
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -21,8 +23,18 @@ export async function GET(req: NextRequest) {
   const clientId = process.env.BUFFER_CLIENT_ID!;
   const redirectUri = `${appUrl}/api/integrations/buffer/callback`;
 
+  // Retrieve PKCE code_verifier from cookie
+  const cookieStore = await cookies();
+  const codeVerifier = cookieStore.get("buffer_code_verifier")?.value;
+
+  if (!codeVerifier) {
+    return NextResponse.redirect(
+      `${appUrl}/dashboard/settings?buffer_error=${encodeURIComponent("Session expired — please try again")}`
+    );
+  }
+
   try {
-    // Exchange code → access token
+    // Exchange code + code_verifier → access token
     const tokenRes = await fetch("https://api.bufferapp.com/1/oauth2/token.json", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -31,28 +43,38 @@ export async function GET(req: NextRequest) {
         redirect_uri: redirectUri,
         code,
         grant_type: "authorization_code",
+        code_verifier: codeVerifier,
       }),
     });
 
     const tokenData = await tokenRes.json();
 
     if (!tokenData.access_token) {
-      throw new Error(tokenData.error_description ?? tokenData.error ?? "Token exchange failed");
+      throw new Error(
+        tokenData.error_description ?? tokenData.error ?? `Token exchange failed: ${JSON.stringify(tokenData)}`
+      );
     }
 
     const token: string = tokenData.access_token;
 
-    // Fetch connected Instagram profiles
-    const profiles = await getInstagramProfiles(token);
+    // Fetch connected Instagram profiles via Buffer
+    let profiles: Awaited<ReturnType<typeof getInstagramProfiles>> = [];
+    try {
+      profiles = await getInstagramProfiles(token);
+    } catch {
+      // Non-fatal — token is still valid, just no Instagram yet
+    }
 
-    // Persist token + first Instagram profile
+    // Persist
     await memory.saveSettings({
       bufferAccessToken: token,
       bufferProfileId: profiles[0]?.id ?? "",
     });
 
-    const username = profiles[0]?.service_username ?? "";
+    // Clear the verifier cookie
+    cookieStore.delete("buffer_code_verifier");
 
+    const username = profiles[0]?.service_username ?? "";
     return NextResponse.redirect(
       `${appUrl}/dashboard/settings?buffer_connected=1&buffer_username=${encodeURIComponent(username)}&buffer_profiles=${profiles.length}`
     );
