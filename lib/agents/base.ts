@@ -89,20 +89,50 @@ export async function generateImageAI(prompt: string): Promise<{
     }
   }
 
-  // 2️⃣ Fallback: OpenAI DALL-E 3
+  // 2️⃣ Fallback: OpenAI image generation (tries gpt-image-1, then dall-e-3, then dall-e-2)
   if (settings.openaiApiKey) {
     const client = new OpenAI({ apiKey: settings.openaiApiKey });
-    const response = await client.images.generate({
-      model: "dall-e-3",
-      prompt,
-      size: "1024x1024",
-      quality: "hd",
-      n: 1,
-    });
-    return {
-      url: response.data?.[0]?.url ?? "",
-      source: "openai",
-    };
+
+    const imageModels = ["gpt-image-1", "dall-e-3", "dall-e-2"];
+    for (const model of imageModels) {
+      try {
+        const params: Parameters<typeof client.images.generate>[0] = {
+          model,
+          prompt,
+          n: 1,
+        };
+
+        // gpt-image-1 uses different size/quality params
+        if (model === "gpt-image-1") {
+          params.size = "1024x1024";
+          params.quality = "standard";
+        } else if (model === "dall-e-3") {
+          params.size = "1024x1024";
+          params.quality = "hd";
+        } else {
+          params.size = "512x512";
+        }
+
+        const response = await client.images.generate(params);
+
+        // gpt-image-1 returns base64, others return url
+        const img = response.data?.[0];
+        if (img) {
+          if ("b64_json" in img && img.b64_json) {
+            return {
+              url: `data:image/png;base64,${img.b64_json}`,
+              source: "openai",
+            };
+          } else if (img.url) {
+            return { url: img.url, source: "openai" };
+          }
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn(`[Image] ${model} failed: ${msg}`);
+        // Try next model
+      }
+    }
   }
 
   throw new Error(
