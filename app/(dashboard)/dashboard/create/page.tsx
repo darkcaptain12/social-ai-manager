@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { PenTool, Image, RefreshCw, Copy, Wand2, Check, Download, Send, Calendar, Clock } from "lucide-react";
+import { PenTool, Image, RefreshCw, Copy, Wand2, Check, Download, Send, Calendar, Clock, Instagram } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import { ShareModal } from "@/components/ShareModal";
 import type { ContentItem, ContentType, ContentObjective } from "@/types";
 
 const CONTENT_TYPES: { value: ContentType; label: string }[] = [
@@ -38,6 +39,7 @@ export default function CreatePage() {
   const [publishing, setPublishing] = useState(false);
   const [publishMode, setPublishMode] = useState<"now" | "queue" | "schedule">("queue");
   const [scheduleDate, setScheduleDate] = useState("");
+  const [showShareModal, setShowShareModal] = useState(false);
 
   async function generateCopy() {
     if (!form.topic) { toast.error("Konu zorunlu"); return; }
@@ -239,7 +241,18 @@ export default function CreatePage() {
       {step === "copy" && content && (
         <div className="space-y-4">
           <div className="card space-y-4">
-            <div className="flex items-center justify-between">
+            {/* Instagram Paylaş — ana buton */}
+          <button
+            onClick={() => setShowShareModal(true)}
+            className="w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold text-base
+                       bg-gradient-to-r from-pink-500 via-purple-500 to-orange-400
+                       text-white shadow-xl shadow-pink-900/30 hover:opacity-90 transition-all"
+          >
+            <Instagram className="w-5 h-5" />
+            Instagram'da Paylaş
+          </button>
+
+          <div className="flex items-center justify-between">
               <h3 className="font-semibold text-white">Oluşturulan Metin</h3>
               <div className="flex gap-2">
                 <button onClick={generateCopy} disabled={loading} className="btn-ghost text-xs">
@@ -381,15 +394,33 @@ export default function CreatePage() {
           <div className="rounded-xl overflow-hidden border border-surface-border aspect-square max-w-md mx-auto">
             <img src={imageUrl} alt="Generated" className="w-full h-full object-cover" />
           </div>
+          {/* Paylaş butonu görsel adımında da */}
+          <button
+            onClick={() => setShowShareModal(true)}
+            className="w-full flex items-center justify-center gap-3 py-4 rounded-xl font-bold text-base
+                       bg-gradient-to-r from-pink-500 via-purple-500 to-orange-400
+                       text-white shadow-xl shadow-pink-900/30 hover:opacity-90 transition-all"
+          >
+            <Instagram className="w-5 h-5" />
+            Instagram'da Paylaş
+          </button>
+
           <div className="flex gap-3">
             <button onClick={() => setStep("copy")} className="btn-secondary flex-1 justify-center text-sm">
               ← Metne Dön
             </button>
-            <button className="btn-primary flex-1 justify-center text-sm">
-              Takvime Ekle →
-            </button>
           </div>
         </div>
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && content && (
+        <ShareModal
+          caption={content.caption}
+          hashtags={content.hashtags}
+          imageUrl={imageUrl ?? undefined}
+          onClose={() => setShowShareModal(false)}
+        />
       )}
     </div>
   );
